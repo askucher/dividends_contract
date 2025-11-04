@@ -254,4 +254,55 @@ contract FeemakerHoldersTest is Test {
         assertEq(charlie.balance, charlieBeforeFinal + (51 * 1 ether) / 8);
         assertEq(holders.withdrawableDividendOf(charlie), 0);
     }
+
+    function test_BobWithdrawsThenTransfersFullShare_NewHolderGetsNextIncome_BobGetsNothing()
+        public
+    {
+        address alice = address(this);
+        address bob = address(0xB0B);
+        address charlie = address(0xC0C);
+
+        // Initial split: Alice 75, Bob 25
+        holders.transfer(bob, 25 ether);
+        assertEq(holders.balanceOf(alice), 75 ether);
+        assertEq(holders.balanceOf(bob), 25 ether);
+
+        // First income: 1 ether
+        _sendEthToContract(address(0xF1), 1 ether);
+
+        // Bob withdraws his portion from the first income (0.25 ether)
+        uint256 bobBefore = bob.balance;
+        vm.prank(bob);
+        holders.withdrawDividend();
+        assertEq(bob.balance, bobBefore + 0.25 ether);
+
+        // Bob transfers his entire share to Charlie
+        vm.prank(bob);
+        holders.transfer(charlie, 25 ether);
+        assertEq(holders.balanceOf(bob), 0);
+        assertEq(holders.balanceOf(charlie), 25 ether);
+
+        // Second income: 1 ether
+        _sendEthToContract(address(0xF2), 1 ether);
+
+        // Expectations after second income:
+        // - Alice gets another 0.75 ether (total 1.5 if not withdrawn yet)
+        // - Charlie (new holder of 25%) gets 0.25 ether
+        // - Bob gets nothing (already withdrew first income and holds no tokens now)
+        assertEq(holders.withdrawableDividendOf(alice), 1.5 ether);
+        assertEq(holders.withdrawableDividendOf(charlie), 0.25 ether);
+        assertEq(holders.withdrawableDividendOf(bob), 0);
+
+        // Optional: perform withdrawals to finalize state and ensure zeroed withdrawables
+        uint256 aliceBefore = alice.balance;
+        holders.withdrawDividend();
+        assertEq(alice.balance, aliceBefore + 1.5 ether);
+        assertEq(holders.withdrawableDividendOf(alice), 0);
+
+        uint256 charlieBefore = charlie.balance;
+        vm.prank(charlie);
+        holders.withdrawDividend();
+        assertEq(charlie.balance, charlieBefore + 0.25 ether);
+        assertEq(holders.withdrawableDividendOf(charlie), 0);
+    }
 }
