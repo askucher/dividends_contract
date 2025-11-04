@@ -36,10 +36,17 @@ contract FeemakerHolders {
 
     // ======== ERC20 standard ========
 
+    /// @notice Returns the token balance of a given `account`.
+    /// @param account The address whose balance is being queried.
+    /// @return The number of tokens held by `account`.
     function balanceOf(address account) public view returns (uint256) {
         return _balances[account];
     }
 
+    /// @notice Returns the remaining number of tokens that `spender` is allowed to spend on behalf of `owner`.
+    /// @param owner The address which owns the tokens.
+    /// @param spender The address which will spend the tokens.
+    /// @return The remaining allowance for `spender`.
     function allowance(
         address owner,
         address spender
@@ -47,17 +54,31 @@ contract FeemakerHolders {
         return _allowances[owner][spender];
     }
 
+    /// @notice Approves `spender` to transfer up to `amount` tokens from the caller's account.
+    /// @param spender The address authorized to spend the tokens.
+    /// @param amount The maximum amount `spender` can transfer.
+    /// @return True if the operation succeeded.
     function approve(address spender, uint256 amount) public returns (bool) {
         _allowances[msg.sender][spender] = amount;
         emit Approval(msg.sender, spender, amount);
         return true;
     }
 
+    /// @notice Transfers `amount` tokens from the caller to `to`.
+    /// @param to The recipient address.
+    /// @param amount The number of tokens to transfer.
+    /// @return True if the transfer succeeded.
     function transfer(address to, uint256 amount) public returns (bool) {
         _transfer(msg.sender, to, amount);
         return true;
     }
 
+    /// @notice Transfers `amount` tokens from `from` to `to` using the allowance mechanism.
+    /// @dev Decreases the caller's allowance from `from` by `amount`.
+    /// @param from The address to transfer tokens from.
+    /// @param to The address to transfer tokens to.
+    /// @param amount The number of tokens to transfer.
+    /// @return True if the transfer succeeded.
     function transferFrom(
         address from,
         address to,
@@ -70,6 +91,10 @@ contract FeemakerHolders {
         return true;
     }
 
+    /// @dev Moves `amount` tokens from `from` to `to`, updating dividend corrections.
+    /// @param from The address tokens are moved from.
+    /// @param to The address tokens are moved to.
+    /// @param amount The number of tokens to move.
     function _transfer(address from, address to, uint256 amount) internal {
         require(to != address(0), "transfer to zero");
         _balances[from] -= amount;
@@ -83,6 +108,9 @@ contract FeemakerHolders {
         emit Transfer(from, to, amount);
     }
 
+    /// @dev Creates `amount` tokens and assigns them to `account`, updating dividend corrections.
+    /// @param account The address receiving the newly minted tokens.
+    /// @param amount The number of tokens to mint.
     function _mint(address account, uint256 amount) internal {
         require(account != address(0));
         totalSupply += amount;
@@ -101,6 +129,9 @@ contract FeemakerHolders {
         distributeDividends();
     }
 
+    /// @notice Distributes the received ETH among token holders proportionally to their balances.
+    /// @dev Increases `magnifiedDividendPerShare` based on `msg.value` and `totalSupply`.
+    ///      Emits {DividendsDistributed} when value is positive.
     function distributeDividends() public payable {
         require(totalSupply > 0, "no tokens");
         if (msg.value > 0) {
@@ -109,13 +140,19 @@ contract FeemakerHolders {
         }
     }
 
-    /// @notice View how much ETH an account can withdraw.
+    /// @notice Returns how much ETH an `account` can withdraw at the current moment.
+    /// @param account The address to query for withdrawable dividends.
+    /// @return The amount of ETH currently withdrawable by `account`.
     function withdrawableDividendOf(
         address account
     ) public view returns (uint256) {
         return accumulativeDividendOf(account) - withdrawnDividends[account];
     }
 
+    /// @notice Returns the total accumulated dividends for `account` (withdrawn + withdrawable).
+    /// @dev Uses magnified dividend math to maintain precision.
+    /// @param account The address to query for accumulated dividends.
+    /// @return The total accumulated ETH dividends for `account`.
     function accumulativeDividendOf(
         address account
     ) public view returns (uint256) {
@@ -126,7 +163,8 @@ contract FeemakerHolders {
             ) / MAGNITUDE;
     }
 
-    /// @notice Withdraw owed dividends
+    /// @notice Withdraws the caller's currently withdrawable dividends.
+    /// @dev Updates `withdrawnDividends` and transfers ETH to the caller.
     function withdrawDividend() public {
         uint256 withdrawable = withdrawableDividendOf(msg.sender);
         if (withdrawable > 0) {
