@@ -32,7 +32,7 @@ contract FeemakerHoldersTest is Test {
         assertEq(holders.withdrawableDividendOf(address(this)), 1 ether);
 
         uint256 beforeBal = address(this).balance;
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, address(this));
         assertEq(address(this).balance, beforeBal + 1 ether);
         assertEq(holders.withdrawableDividendOf(address(this)), 0);
     }
@@ -55,12 +55,12 @@ contract FeemakerHoldersTest is Test {
 
         // Withdraw and verify balances get credited correctly
         uint256 aliceBefore = alice.balance;
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, alice);
         assertEq(alice.balance, aliceBefore + 0.75 ether);
 
         uint256 bobBefore = bob.balance;
         vm.prank(bob);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, bob);
         assertEq(bob.balance, bobBefore + 0.25 ether);
     }
 
@@ -93,12 +93,12 @@ contract FeemakerHoldersTest is Test {
 
         // Withdrawals settle amounts
         uint256 aliceBefore = alice.balance;
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, alice);
         assertEq(alice.balance, aliceBefore + 1.75 ether);
 
         uint256 bobBefore = bob.balance;
         vm.prank(bob);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, bob);
         assertEq(bob.balance, bobBefore + 0.25 ether);
     }
 
@@ -122,7 +122,7 @@ contract FeemakerHoldersTest is Test {
 
         // Withdraw and verify balances get credited correctly
         uint256 aliceBefore = alice.balance;
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, alice);
         assertEq(alice.balance, aliceBefore + 0.75 ether);
 
         // Bob transfers half of his tokens (12.5 ether) to Charlie
@@ -137,13 +137,13 @@ contract FeemakerHoldersTest is Test {
         // Charlie has no past dividends; withdrawing should yield zero
         uint256 charlieBefore = charlie.balance;
         vm.prank(charlie);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, charlie);
         assertEq(charlie.balance, charlieBefore);
 
         // Bob can withdraw his previously accrued dividends (0.25 ether)
         uint256 bobBefore = bob.balance;
         vm.prank(bob);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, bob);
         assertEq(bob.balance, bobBefore + 0.25 ether);
 
         _sendEthToContract(address(0xCAFE), 1 ether);
@@ -170,7 +170,7 @@ contract FeemakerHoldersTest is Test {
 
         // Alice withdraws; Bob does not
         uint256 aliceBefore = alice.balance;
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, alice);
         assertEq(alice.balance, aliceBefore + 0.75 ether);
 
         // After Alice's withdrawal, only Bob still has 0.25 ether pending
@@ -214,7 +214,7 @@ contract FeemakerHoldersTest is Test {
                 // after 5 incomes
                 uint256 bobBefore = bob.balance;
                 vm.prank(bob);
-                holders.withdrawDividend();
+                holders.withdrawDividend(0, bob);
                 // Bob share per income = 12.5% = 1/8 ether → 5/8 ether total so far
                 assertEq(bob.balance, bobBefore + (5 * 1 ether) / 8);
             }
@@ -222,7 +222,7 @@ contract FeemakerHoldersTest is Test {
             if (i == 14) {
                 // after 15 incomes
                 uint256 aliceBefore = alice.balance;
-                holders.withdrawDividend();
+                holders.withdrawDividend(0, alice);
                 // Alice share per income = 75% = 3/4 ether → 15 * 3/4 = 11.25 ether
                 assertEq(alice.balance, aliceBefore + (15 * 1 ether * 3) / 4);
             }
@@ -238,19 +238,19 @@ contract FeemakerHoldersTest is Test {
 
         // Withdraw and verify final balances and that withdrawables reset to zero
         uint256 aliceBeforeFinal = alice.balance;
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, alice);
         assertEq(alice.balance, aliceBeforeFinal + (36 * 1 ether * 3) / 4);
         assertEq(holders.withdrawableDividendOf(alice), 0);
 
         uint256 bobBeforeFinal = bob.balance;
         vm.prank(bob);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, bob);
         assertEq(bob.balance, bobBeforeFinal + (46 * 1 ether) / 8);
         assertEq(holders.withdrawableDividendOf(bob), 0);
 
         uint256 charlieBeforeFinal = charlie.balance;
         vm.prank(charlie);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, charlie);
         assertEq(charlie.balance, charlieBeforeFinal + (51 * 1 ether) / 8);
         assertEq(holders.withdrawableDividendOf(charlie), 0);
     }
@@ -273,7 +273,7 @@ contract FeemakerHoldersTest is Test {
         // Bob withdraws his portion from the first income (0.25 ether)
         uint256 bobBefore = bob.balance;
         vm.prank(bob);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, bob);
         assertEq(bob.balance, bobBefore + 0.25 ether);
 
         // Bob transfers his entire share to Charlie
@@ -295,13 +295,13 @@ contract FeemakerHoldersTest is Test {
 
         // Optional: perform withdrawals to finalize state and ensure zeroed withdrawables
         uint256 aliceBefore = alice.balance;
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, alice);
         assertEq(alice.balance, aliceBefore + 1.5 ether);
         assertEq(holders.withdrawableDividendOf(alice), 0);
 
         uint256 charlieBefore = charlie.balance;
         vm.prank(charlie);
-        holders.withdrawDividend();
+        holders.withdrawDividend(0, charlie);
         assertEq(charlie.balance, charlieBefore + 0.25 ether);
         assertEq(holders.withdrawableDividendOf(charlie), 0);
     }

