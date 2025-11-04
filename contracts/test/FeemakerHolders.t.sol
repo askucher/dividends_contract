@@ -235,5 +235,23 @@ contract FeemakerHoldersTest is Test {
         assertEq(holders.withdrawableDividendOf(alice), (36 * 1 ether * 3) / 4);
         assertEq(holders.withdrawableDividendOf(bob), (46 * 1 ether) / 8);
         assertEq(holders.withdrawableDividendOf(charlie), (51 * 1 ether) / 8);
+
+        // Withdraw and verify final balances and that withdrawables reset to zero
+        uint256 aliceBeforeFinal = alice.balance;
+        holders.withdrawDividend();
+        assertEq(alice.balance, aliceBeforeFinal + (36 * 1 ether * 3) / 4);
+        assertEq(holders.withdrawableDividendOf(alice), 0);
+
+        uint256 bobBeforeFinal = bob.balance;
+        vm.prank(bob);
+        holders.withdrawDividend();
+        assertEq(bob.balance, bobBeforeFinal + (46 * 1 ether) / 8);
+        assertEq(holders.withdrawableDividendOf(bob), 0);
+
+        uint256 charlieBeforeFinal = charlie.balance;
+        vm.prank(charlie);
+        holders.withdrawDividend();
+        assertEq(charlie.balance, charlieBeforeFinal + (51 * 1 ether) / 8);
+        assertEq(holders.withdrawableDividendOf(charlie), 0);
     }
 }
