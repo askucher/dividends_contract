@@ -64,11 +64,11 @@ In another terminal, run tests or scripts against the local RPC (`--rpc-url http
 
 ## Deploy
 
-Deployment script: `contracts/script/FeemakerHolders.s.sol` (entry: `CounterScript`). It deploys `FeemakerHolders` with an initial supply of `100 ether` (100 tokens with 18 decimals).
+Deployment script: `contracts/script/FeemakerHolders.s.sol` (entry: `FeemakerHoldersScript`). It deploys `FeemakerHolders` with an initial supply of `100 ether` (100 tokens with 18 decimals).
 
 Example (replace placeholders):
 ```shell
-forge script contracts/script/FeemakerHolders.s.sol:CounterScript \
+forge script contracts/script/FeemakerHolders.s.sol:FeemakerHoldersScript \
   --rpc-url <RPC_URL> \
   --private-key <PRIVATE_KEY> \
   --broadcast
@@ -76,7 +76,7 @@ forge script contracts/script/FeemakerHolders.s.sol:CounterScript \
 
 On Anvil (no broadcast, dry-run):
 ```shell
-forge script contracts/script/FeemakerHolders.s.sol:CounterScript \
+forge script contracts/script/FeemakerHolders.s.sol:FeemakerHoldersScript \
   --rpc-url http://127.0.0.1:8545
 ```
 

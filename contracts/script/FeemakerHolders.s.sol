@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {Script, console} from "forge-std/Script.sol";
 import {FeemakerHolders} from "../src/FeemakerHolders.sol";
 
-contract CounterScript is Script {
+contract FeemakerHoldersScript is Script {
     FeemakerHolders public holders;
 
     function setUp() public {}
